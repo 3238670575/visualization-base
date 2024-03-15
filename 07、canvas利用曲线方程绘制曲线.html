@@ -1,0 +1,100 @@
+<!--
+ * @Author: twj
+ * @Date: 2024-03-15 14:40:30
+ * @LastEditTime: 2024-03-15 16:32:04
+ * @LastEditors: twj
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>画圆</title>
+    <style>
+      canvas {
+        border: 1px dashed salmon;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="512" height="512"></canvas>
+    <script>
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+      const { width, height } = canvas;
+      // 将坐标系的原点移动到画布中心
+      ctx.translate(0.5 * width, 0.5 * height);
+      // 将y轴翻转
+      ctx.scale(1, -1);
+
+      const TAU_SEGMENTS = 60;
+      const TAU = Math.PI * 2;
+      function arc(x0, y0, radius, startAng = 0, endAng = Math.PI * 2) {
+        // 计算角度
+        const ang = Math.min(TAU, endAng - startAng);
+        // 初始化返回值
+        const ret = ang === TAU ? [] : [[x0, y0]];
+        // 计算段数
+        const segments = Math.round((TAU_SEGMENTS * ang) / TAU);
+        // 遍历每一段
+        for (let i = 0; i <= segments; i++) {
+          // 计算每一段的圆弧坐标
+          const x = x0 + radius * Math.cos(startAng + (ang * i) / segments);
+          const y = y0 + radius * Math.sin(startAng + (ang * i) / segments);
+          // 将坐标添加到返回值中
+          ret.push([x, y]);
+        }
+        // 返回计算结果
+        return ret;
+      }
+
+      const ellipse = (
+        x0,
+        y0,
+        radiusX,
+        radiusY,
+        startAng = 0,
+        endAng = Math.PI * 2
+      ) => {
+        const ang = Math.min(TAU, endAng - startAng);
+        const ret = ang === TAU ? [] : [[x0, y0]];
+        const segments = Math.round((TAU_SEGMENTS * ang) / TAU);
+        for (let i = 0; i <= segments; i++) {
+          const x = x0 + radiusX * Math.cos(startAng + (ang * i) / segments);
+          const y = y0 + radiusY * Math.sin(startAng + (ang * i) / segments);
+          ret.push([x, y]);
+        }
+        return ret;
+      };
+      // 绘制函数，points为点集，strokeStyle为绘制颜色，fillStyle为填充颜色
+      function draw(points, strokeStyle = "salmon", fillStyle = null) {
+        console.log(points);
+        // 设置绘制颜色
+        ctx.strokeStyle = strokeStyle;
+        // 开始绘制
+        ctx.beginPath();
+        // 移动至起点
+        ctx.moveTo(...points[0]);
+        // 遍历点集，绘制线条
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(...points[i]);
+        }
+        // 闭合路径
+        ctx.closePath();
+        // 如果有填充颜色，则填充
+        if (fillStyle) {
+          ctx.fillStyle = fillStyle;
+          ctx.fill();
+        }
+        // 描边
+        ctx.stroke();
+      }
+
+      // 绘制圆弧
+      draw(arc(0, 0, 100));
+      draw(ellipse(100, 0, 100, 50));
+    </script>
+  </body>
+</html>
