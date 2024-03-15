@@ -1,0 +1,77 @@
+<!--
+ * @Author: twj
+ * @Date: 2024-03-13 10:46:25
+ * @LastEditTime: 2024-03-14 15:26:29
+ * @LastEditors: twj
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas width="500" height="500"></canvas>
+  </body>
+  <script type="module">
+    const gl = document.querySelector("canvas").getContext("webgl");
+    //创建一个三角形坐标数据,并存入缓冲区
+    const triangle = new Float32Array([-1, -1, 0, 1, 1, -1]);
+    // 顶点着色器
+    const vertex = `
+    attribute vec2 position;
+    varying vec3 color;
+
+    void main(){
+        gl_PointSize = 1.0;
+        color = vec3(0.5 + position * 0.5 , 0.0);
+        gl_Position = vec4(position*0.5,1.0,1.0);
+    }`;
+
+    // 片元着色器
+    const fragment = `
+    precision mediump float;
+    varying vec3 color;
+    void main(){
+        gl_FragColor = vec4(color,1.0);
+    }`;
+
+    const initShader = (gl, VSHADER_SOURCE, FSHADER_SOURCE) => {
+      //创建顶点着色器
+      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vertexShader, vertex);
+      gl.compileShader(vertexShader);
+      //创建片元着色器
+      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fragmentShader, fragment);
+      gl.compileShader(fragmentShader);
+
+      //创建WebGLPrgame对象
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      gl.useProgram(program); //启用webglProgram对象
+      return program;
+    };
+
+    const bufferData = (gl, program) => {
+      const bufferId = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+      gl.bufferData(gl.ARRAY_BUFFER, triangle, gl.STATIC_DRAW);
+      //获取顶点着色器的position的变量位置下标
+      const vPosition = gl.getAttribLocation(program, "position");
+      gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0); //从bindBuffer绑定的缓冲区中读取数据
+      gl.enableVertexAttribArray(vPosition); //激活这个变量
+    };
+    const init = () => {
+      const program = initShader(gl, vertex, fragment);
+      bufferData(gl, program);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, triangle.length / 2);
+    };
+    init();
+  </script>
+</html>

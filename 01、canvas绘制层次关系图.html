@@ -1,0 +1,74 @@
+<!--
+ * @Author: twj
+ * @Date: 2024-01-25 16:40:51
+ * @LastEditTime: 2024-03-06 13:48:29
+ * @LastEditors: twj
+ * @Description: 
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas width="1600" height="1600"></canvas>
+    <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
+  </body>
+  <script type="module">
+   import dataSource from "./data.js";
+    // 获取节点数量
+    const regions = d3
+      .hierarchy(dataSource)
+      .sum((d) => 1)
+      .sort((a, b) => b.value - a.value);
+    // 设置节点大小
+    const pack = d3.pack().size([1600, 1600]).padding(3);
+    // 获取根节点
+    const root = pack(regions);
+    console.log(root);
+
+   const canvas = document.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // 绘制节点
+    const draw = (
+      ctx,
+      node,
+      { fillStyle = "rgba(0, 0, 0, 0.2)", textColor = "white" } = {}
+    ) => {
+      // 获取子节点
+      const children = node.children;
+      // 获取节点的位置和半径
+      const { x, y, r } = node;
+      // 设置填充颜色
+      ctx.fillStyle = fillStyle;
+      // 开始绘制圆
+      ctx.beginPath();
+      // 绘制圆弧
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      // 填充圆弧
+      ctx.fill();
+      // 如果有子节点，则绘制子节点
+      if (children) {
+        for (let i = 0; i < children.length; i++) {
+          draw(ctx, children[i]);
+        }
+      // 如果没有子节点，则绘制文本
+      } else {
+        // 设置文本颜色
+        ctx.fillStyle = textColor;
+        // 设置字体
+        ctx.font = "12px Arial";
+        // 设置文本对齐方式
+        ctx.textAlign = "center";
+        // 绘制文本
+        ctx.fillText(node.data.name, x, y);
+      }
+    };
+    // 绘制根节点
+    draw(ctx, root);
+  </script>
+</html>
