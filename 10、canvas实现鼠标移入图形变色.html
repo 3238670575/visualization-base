@@ -1,0 +1,93 @@
+<!--
+ * @Author: twj
+ * @Date: 2024-03-16 01:49:27
+ * @LastEditTime: 2024-03-18 10:22:46
+ * @LastEditors: twj
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas2D 如何填充多边形</title>
+    <style>
+      canvas {
+        border: 1px dashed salmon;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="512" height="512"></canvas>
+    <script type="module">
+      import { Vector2D } from "./vector2d.js";
+
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+      const { width, height } = canvas;
+      const w = 0.5 * width,
+        h = 0.5 * height;
+      ctx.translate(w, h);
+      ctx.scale(1, -1);
+
+      // 绘制坐标轴
+      function drawAxis() {
+        // ctx.save();
+        ctx.strokeStyle = "#ccc";
+        ctx.beginPath();
+        ctx.moveTo(-w, 0);
+        ctx.lineTo(w, 0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, -h);
+        ctx.lineTo(0, h);
+        ctx.stroke();
+        // ctx.restore();
+      }
+      drawAxis();
+      const vertices = [
+        [-0.7, 0.5],
+        [-0.4, 0.3],
+        [-0.25, 0.71],
+        [-0.1, 0.56],
+        [-0.1, 0.13],
+        [0.4, 0.21],
+        [0, -0.6],
+        [-0.3, -0.3],
+        [-0.6, -0.3],
+        [-0.45, 0.0],
+      ];
+      const positions = vertices.map(([x, y]) => [x * 256, y * 256]);
+
+      const draw = (ctx, points, strokeStyle = "salmon", fillStyle = null) => {
+        (ctx.strokeStyle = strokeStyle),
+          ctx.beginPath(),
+          ctx.moveTo(...points[0]);
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(...points[i]);
+        }
+        ctx.closePath();
+        if (fillStyle) {
+          ctx.fillStyle = fillStyle;
+          ctx.fill();
+        }
+        ctx.stroke();
+      };
+      draw(ctx, positions, "transparent", "salmon");
+      const { left, top } = canvas.getBoundingClientRect();
+
+      canvas.addEventListener("mousemove", (evt) => {
+        const { x, y } = evt;
+        const offsetX = x - left;
+        const offsetY = y - top;
+        ctx.clearRect(-256, -256, 512, 512);
+        if (ctx.isPointInPath(offsetX, offsetY)) {
+          draw(ctx, positions, "salmon", "green");
+        } else {
+          draw(ctx, positions, "transparent", "salmon");
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 <!--
  * @Author: twj
  * @Date: 2024-03-17 21:51:53
- * @LastEditTime: 2024-03-17 23:07:32
+ * @LastEditTime: 2024-03-18 09:22:41
  * @LastEditors: twj
  * @Description: 
 -->
@@ -91,9 +91,9 @@
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cells, gl.STATIC_DRAW);
 
       gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawElements(gl.TRIANGLES, cells.length, gl.UNSIGNED_SHORT, 0);
+      // gl.drawElements(gl.TRIANGLES, cells.length, gl.UNSIGNED_SHORT, 0);
       // 用描边 LINE_STRIP 代替填充 TRIANGLES
-      // gl.drawElements(gl.LINE_STRIP, cells.length, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.LINE_STRIP, cells.length, gl.UNSIGNED_SHORT, 0);
     </script>
   </body>
 </html>
