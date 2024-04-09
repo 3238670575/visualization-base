@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>webgl绘制图片纹理</title>
+  </head>
+  <body>
+    <canvas width="500" height="500"></canvas>
+  </body>
+  <script src="./webgl-utils.js"></script>
+  <script type="module">
+    // 获取网页中的canvas元素并获取其上下文
+    const gl = document.querySelector("canvas").getContext("webgl");
+    // 声明一个变量vertex来存储 vertex shader 的源代码
+    let vertex;
+    // 使用await关键字等待fetch操作完成，然后从响应中获取文本，并将其存储在vertex变量中
+    await fetch("./13.vert")
+      .then((response) => response.text())
+      .then((text) => (vertex = text));
+
+    // 声明一个变量fragment来存储 fragment shader 的源代码
+    let fragment;
+    // 使用await关键字等待fetch操作完成，然后从响应中获取文本，并将其存储在fragment变量中
+    await fetch("./13.frag")
+      .then((response) => response.text())
+      .then((text) => (fragment = text));
+
+    // 定义一个函数main
+    const main = () => {
+      // 声明一个变量image，用于存储图片元素
+      var image = new Image();
+      // 设置图片元素的src属性，用于加载图片
+      image.src = "./leaves.jpg";
+      // 等待图片加载完成
+      image.onload = function () {
+        // 调用renderImage函数，传入图片元素作为参数
+        renderImage(image);
+      };
+    };
+    const renderImage = (image) => {
+      // 检查是否有初始化过gl，如果没有则直接返回
+      if (!gl) return;
+      // 初始化shader程序，将vertex和fragment合并
+      const program = initShader(gl, vertex, fragment);
+
+      // 获取shader程序中的a_position属性的位置
+      const positionLocation = gl.getAttribLocation(program, "a_position");
+      // 获取shader程序中的a_texCoord属性的位置
+      const texcoordLocation = gl.getAttribLocation(program, "a_texCoord");
+      // 创建一个positionBuffer
+      const positionBuffer = gl.createBuffer();
+      // 将positionBuffer绑定到gl中
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      // 设置长方体的顶点坐标
+      setRectangle(gl, 0, 0, image.width, image.height);
+
+      // 创建一个texcoordBuffer
+      const texcoordBuffer = gl.createBuffer();
+      // 将texcoordBuffer绑定到gl中
+      gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+      // 将texcoordBuffer的数据设置为预定义的数据
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+          0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        ]),
+        gl.STATIC_DRAW
+      );
+      const texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+
+      // 设置参数，可以绘制任何尺寸的图像
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image
+      );
+      // 获取程序中u_resolution变量的位置
+      const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+      const textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
+      // 将画布的尺寸调整为显示的尺寸
+      resizeCanvasToDisplaySize(gl.canvas);
+      // 设置视口为画布的尺寸
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      // 设置背景颜色为黑色
+      gl.clearColor(0, 0, 0, 0);
+      // 清除画布上的所有颜色
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      // 使用程序
+      gl.useProgram(program);
+
+      // 启用位置属性
+      gl.enableVertexAttribArray(positionLocation);
+      // 绑定位置缓冲区
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+      // 设置位置属性的大小、类型、是否归一化等
+      const size = 2;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
+      const offset = 0;
+      gl.vertexAttribPointer(
+        positionLocation,
+        size,
+        type,
+        normalize,
+        stride,
+        offset
+      );
+
+      // 启用纹理坐标属性
+      gl.enableVertexAttribArray(texcoordLocation);
+      // 绑定纹理坐标缓冲区
+      gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+
+      // 设置纹理坐标属性的大小、类型、是否归一化等
+      gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+      // 将画布的尺寸传递给程序
+      gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+      gl.uniform2f(textureSizeLocation, image.width, image.height);
+
+      // 设置三角形的类型
+      const primitiveType = gl.TRIANGLES;
+      // 绘制三角形
+      gl.drawArrays(primitiveType, 0, 6);
+    };
+
+    // 初始化着色器（VERTEX_SHADER和FRAGMENT_SHADER）
+    const initShader = (gl, VSHADER_SOURCE, FSHADER_SOURCE) => {
+      // 创建VERTEX_SHADER着色器
+      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+      // 将着色器源代码传递给着色器
+      gl.shaderSource(vertexShader, VSHADER_SOURCE);
+      // 编译着色器
+      gl.compileShader(vertexShader);
+      // 创建FRAGMENT_SHADER着色器
+      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+      // 将着色器源代码传递给着色器
+      gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+      // 编译着色器
+      gl.compileShader(fragmentShader);
+
+      // 创建程序
+      const program = gl.createProgram();
+      // 将着色器附加到程序
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      // 链接程序
+      gl.linkProgram(program);
+      // 使用程序
+      gl.useProgram(program);
+      return program;
+    };
+
+    // 定义一个函数，用于设置矩形的位置和大小
+    const setRectangle = (gl, x, y, width, height) => {
+      // 定义矩形左上角和右下角的坐标
+      const x1 = x;
+      const x2 = x + width;
+      const y1 = y;
+      const y2 = y + height;
+      // 将矩形的数据添加到缓冲区中
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+        gl.STATIC_DRAW
+      );
+    }
+
+    // 调整画布大小以适应显示
+    const resizeCanvasToDisplaySize = (canvas, multiplier) => {
+      // 如果没有传入multiplier，则默认为1
+      multiplier = multiplier || 1;
+      // 计算调整后的宽度
+      const width = (canvas.clientWidth * multiplier) | 0;
+      // 计算调整后的高度
+      const height = (canvas.clientHeight * multiplier) | 0;
+      // 如果画布的宽度不等于计算后的宽度，或者高度不等于计算后的高度
+      if (canvas.width !== width || canvas.height !== height) {
+        // 调整画布大小
+        canvas.width = width;
+        canvas.height = height;
+        // 返回true
+        return true;
+      }
+      // 否则返回false
+      return false;
+    };
+    main();
+  </script>
+</html>
