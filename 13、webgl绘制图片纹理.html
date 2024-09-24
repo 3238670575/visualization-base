@@ -8,21 +8,21 @@
   <body>
     <canvas width="500" height="500"></canvas>
   </body>
-  <script src="./webgl-utils.js"></script>
+  <script src="./utils/webgl-utils.js"></script>
   <script type="module">
     // 获取网页中的canvas元素并获取其上下文
     const gl = document.querySelector("canvas").getContext("webgl");
     // 声明一个变量vertex来存储 vertex shader 的源代码
     let vertex;
     // 使用await关键字等待fetch操作完成，然后从响应中获取文本，并将其存储在vertex变量中
-    await fetch("./13.vert")
+    await fetch("./vert/13.vert")
       .then((response) => response.text())
       .then((text) => (vertex = text));
 
     // 声明一个变量fragment来存储 fragment shader 的源代码
     let fragment;
     // 使用await关键字等待fetch操作完成，然后从响应中获取文本，并将其存储在fragment变量中
-    await fetch("./13.frag")
+    await fetch("./frag/13.frag")
       .then((response) => response.text())
       .then((text) => (fragment = text));
 
@@ -31,7 +31,7 @@
       // 声明一个变量image，用于存储图片元素
       var image = new Image();
       // 设置图片元素的src属性，用于加载图片
-      image.src = "./leaves.jpg";
+      image.src = "./image/leaves.jpg";
       // 等待图片加载完成
       image.onload = function () {
         // 调用renderImage函数，传入图片元素作为参数
